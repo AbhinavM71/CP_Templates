@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Android ViewModel Guide</title>
+<style>
+/* Theme Variables */
+:root {
+  --font-family-display: Arial, sans-serif;
+  --font-weight-display: 600;
+  --font-family-content: Arial, sans-serif;
+  --font-weight-content: 400;
+  --font-size-content: 16px;
+  --line-height-content: 1.4;
+}
+
+/* DARK THEME (DEFAULT) */
+body.theme-dark {
+  --color-bg-base: #0f172a;
+  --color-bg-elevated: #020617;
+  --color-bg-surface: #1e293b;
+  --color-bg-muted: #334155;
+  --color-text-primary: #f1f5f9;
+  --color-text-secondary: #cbd5e1;
+  --color-text-muted: #94a3b8;
+  --color-text-accent: #38bdf8;
+  --color-primary: #38bdf8;
+  --color-primary-foreground: #0f172a;
+}
+
+/* Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-family-content);
+  font-weight: var(--font-weight-content);
+  font-size: var(--font-size-content);
+  line-height: var(--line-height-content);
+  overflow-x: hidden;
+}
+
+/* Slide Container */
+.slide {
+  width: 960px;
+  height: 540px;
+  margin: 0 auto 20px;
+  display: flex;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Layout Utilities */
+.row { flex-direction: row; }
+.col { flex-direction: column; }
+.center {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+.space-between { justify-content: space-between; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.items-end { align-items: flex-end; }
+.fill-width { flex: 1; }
+.fill-height { flex: 1; display: flex; flex-direction: column; }
+
+/* Spacing */
+.gap-sm { gap: 0.5rem; }
+.gap-md { gap: 1rem; }
+.gap-lg { gap: 1.5rem; }
+.gap-xl { gap: 2rem; }
+.gap-2xl { gap: 3rem; }
+
+.p-4 { padding: 1rem; }
+.p-6 { padding: 1.5rem; }
+.p-8 { padding: 2rem; }
+.p-12 { padding: 3rem; }
+.p-16 { padding: 4rem; }
+
+.mb-2 { margin-bottom: 0.5rem; }
+.mb-4 { margin-bottom: 1rem; }
+.mb-6 { margin-bottom: 1.5rem; }
+.mb-8 { margin-bottom: 2rem; }
+.mb-12 { margin-bottom: 3rem; }
+
+.mt-2 { margin-top: 0.5rem; }
+.mt-4 { margin-top: 1rem; }
+.mt-6 { margin-top: 1.5rem; }
+.mt-8 { margin-top: 2rem; }
+.mt-12 { margin-top: 3rem; }
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-family-display);
+  font-weight: var(--font-weight-display);
+  line-height: 1.2;
+  margin: 0;
+}
+
+h1 { font-size: 3rem; }
+h2 { font-size: 2.25rem; }
+h3 { font-size: 1.75rem; }
+h4 { font-size: 1.5rem; }
+h5 { font-size: 1.25rem; }
+h6 { font-size: 1rem; }
+
+.text-6xl { font-size: 3.75rem; }
+.text-5xl { font-size: 3rem; }
+.text-4xl { font-size: 2.25rem; }
+.text-3xl { font-size: 1.875rem; }
+.text-2xl { font-size: 1.5rem; }
+.text-xl { font-size: 1.25rem; }
+.text-lg { font-size: 1.125rem; }
+.text-base { font-size: 1rem; }
+.text-sm { font-size: 0.875rem; }
+.text-xs { font-size: 0.75rem; }
+
+.font-bold { font-weight: 700; }
+.font-semibold { font-weight: 600; }
+.font-medium { font-weight: 500; }
+.font-normal { font-weight: 400; }
+
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+.opacity-90 { opacity: 0.9; }
+.opacity-80 { opacity: 0.8; }
+.opacity-70 { opacity: 0.7; }
+.opacity-60 { opacity: 0.6; }
+
+/* Lists */
+ul, ol {
+  margin-left: 2rem;
+  line-height: 1.8;
+}
+
+ul li { list-style: disc; }
+ol li { list-style: decimal; }
+
+li { margin-bottom: 0.75rem; }
+li:last-child { margin-bottom: 0; }
+
+/* Card Styles */
+.card-rect {
+  padding: 2rem;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Code Blocks */
+pre {
+  background-color: #1e293b;
+  padding: 1rem;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+code {
+  font-family: 'Courier New', monospace;
+  color: #38bdf8;
+}
+</style>
+</head>
+<body class="theme-dark">
+
+  <!-- Slide 1: Title -->
+  <section class="slide p-16 col center" style="background-color: #020617; color: #f1f5f9;">
+    <h1 class="text-6xl mb-4" style="color: #38bdf8;">Android ViewModel</h1>
+    <p class="text-2xl" style="color: #cbd5e1;">Use Cases, Patterns &amp; Best Practices</p>
+    <p class="text-sm mt-8" style="color: #94a3b8;">Kotlin Implementation Guide • 2026</p>
+  </section>
+
+  <!-- Slide 2: What is ViewModel? -->
+  <section class="slide p-16 col" style="background-color: #0f172a; color: #f1f5f9;">
+    <h2 class="mb-6" style="color: #38bdf8;">What is ViewModel?</h2>
+    <ul class="text-lg" style="color: #cbd5e1;">
+      <li>Lifecycle-aware component for managing UI-related data</li>
+      <li>Survives configuration changes (screen rotation, language change)</li>
+      <li>Separates business logic from UI components</li>
+      <li>Part of Android Jetpack Architecture Components</li>
+    </ul>
+  </section>
+
+  <!-- Slide 3: Why Use ViewModel? -->
+  <section class="slide p-16 col" style="background-color: #0f172a; color: #f1f5f9;">
+    <h2 class="mb-6" style="color: #38bdf8;">Why Use ViewModel?</h2>
+    <ul class="text-lg" style="color: #cbd5e1;">
+      <li>Prevents data loss during configuration changes</li>
+      <li>Reduces memory leaks by avoiding Activity/Fragment references</li>
+      <li>Enables reactive programming with LiveData/Flow</li>
+      <li>Improves testability and code maintainability</li>
+    </ul>
+  </section>
+
+  <!-- Slide 4: ViewModel Lifecycle -->
+  <section class="slide p-16 col" style="background-color: #0f172a; color: #f1f5f9;">
+    <h2 class="mb-6" style="color: #38bdf8;">ViewModel Lifecycle</h2>
+    <p class="text-lg mb-4" style="color: #cbd5e1;">ViewModel lives longer than Activity/Fragment lifecycle</p>
+    <div class="row gap-lg">
+      <div class="fill-width" style="background-color: #1e293b; padding: 2rem;">
+        <h3 class="mb-4" style="color: #38bdf8;">Activity Lifecycle</h3>
+        <p style="color: #cbd5e1;">onCreate → onDestroy (multiple times on rotation)</p>
+      </div>
+      <div class="fill-width" style="background-color: #1e293b; padding: 2rem;">
+        <h3 class="mb-4" style="color: #38bdf8;">ViewModel Lifecycle</h3>
+        <p style="color: #cbd5e1;">Created once → Survives rotation → onCleared on finish</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 5: Use Case 1 - Configuration Change Survival -->
+  <section class="slide p-16 col" style="background-color: #0f172a; color: #f1f5f9;">
+    <h2 class="mb-6" style="color: #38bdf8;">Use Case 1: Configuration Change Survival</h2>
+    <p class="text-lg mb-4" style="color: #cbd5e1;">Preserve data during screen rotation</p>
+    <div style="background-color: #1e293b; padding: 1.5rem;">
+      <pre><code style="color: #38bdf8;">class CounterViewModel : ViewModel() {
+    private val _count = MutableLiveData(0)
+    val count: LiveData&lt;Int&gt; = _count
+    
+    fun increment() {
+        _count.value = (_count.value ?: 0) + 1
+    }
+}</code></pre>
+    </div>
+  </section>
+
+  <!-- Slide 6: Use Case 1 - Activity Implementation -->
+  <section class="slide p-16 col" style="background-color: #0f172a; color: #f1f5f9;">
+    <h2 class="mb-6" style="color: #38bdf8;">Use Case 1: Activity Implementation</h2>
+    <div style="background-color: #1e293b; padding: 1.5rem;">
+      <pre><code style="color: #38bdf8;">class MainActivity : AppCompatActivity() {
+    private val viewModel: CounterViewModel by viewModels()
+    
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        
+        viewModel.count.observe(this) { count -&gt;
+            textView.text = count.toString()
+        }
+        
+        button.setOnClickListener { viewModel.increment() }
+    }
+}</code></pre>
+    </div>
+  </section>
+
+  <!-- Slide 7: Use Case 2 - Data Persistence with Repository -->
+  <section class="slide p-16 col" style="background-color: #0f172a; color: #f1f5f9;">
+    <h2 class="mb-6" style="color: #38bdf8;">Use Case 2: Data Persistence with Repository</h2>
+    <p class="text-lg mb-4" style="color: #cbd5e1;">ViewModel communicates with Repository for data operations</p>
+    <div style="background-color: #1e293b; padding: 1.5rem;">
+      <pre><code style="color: #38bdf8;">class UserViewModel(
+    private val repository: UserRepository
+) : ViewModel() {
+    private val _users = MutableLiveData&lt;List&lt;User&gt;&gt;()
+    val users: LiveData&lt;List&lt;User&gt;&gt; = _users
+    
+    fun loadUsers() {
+        viewModelScope.launch {
+            _users.value = repository.getUsers()
+        }
+    }
+}</code></pre>
+    </div>
+  </section>
+
+  <!-- Slide 8: Use Case 3 - Network Operations -->
+  <section class="slide p-16 col" style="background-color: #0f172a; color: #f1f5f9;">
+    <h2 class="mb-6" style="color: #38bdf8;">Use Case 3: Network Operations</h2>
+    <p class="text-lg mb-4" style="color: #cbd5e1;">Handle API calls with loading states</p>
+    <div style="background-color: #1e293b; padding: 1.5rem;">
+      <pre><code style="color: #38bdf8;">class NewsViewModel : ViewModel() {
+    private val _uiState = MutableStateFlow&lt;UiState&gt;(UiState.Loading)
+    val uiState: StateFlow&lt;UiState&gt; = _uiState
+    
+    fun fetchNews() = viewModelScope.launch {
+        _uiState.value = UiState.Loading
+        try {
+            val news = repository.getNews()
+            _uiState.value = UiState.Success(news)
+        } catch (e: Exception) {
+            _uiState.value = UiState.Error(e.message)
+        }
+    }
+}</code></pre>
+    </div>
+  </section>
+
+  <!-- Slide 9: Use Case 4 - Shared ViewModel -->
+  <section class="slide p-16 col" style="background-color: #0f172a; color: #f1f5f9;">
+    <h2 class="mb-6" style="color: #38bdf8;">Use Case 4: Shared ViewModel Between Fragments</h2>
+    <p class="text-lg mb-4" style="color: #cbd5e1;">Share data between multiple fragments</p>
+    <div style="background-color: #1e293b; padding: 1.5rem;">
+      <pre><code style="color: #38bdf8;">// Fragment A
+class FragmentA : Fragment() {
+    private val sharedVM: SharedViewModel by activityViewModels()
+    
+    fun sendData() {
+        sharedVM.updateMessage("Hello from Fragment A")
+    }
+}
+
+// Fragment B
+class FragmentB : Fragment() {
+    private val sharedVM: SharedViewModel by activityViewModels()
+    
+    override fun onViewCreated(view: View, state: Bundle?) {
+        sharedVM.message.observe(viewLifecycleOwner) { msg -&gt;
+            textView.text = msg
+        }
+    }
+}</code></pre>
+    </div>
+  </section>
+
+  <!-- Slide 10: Use Case 5 - Form Validation -->
+  <section class="slide p-16 col" style="background-color: #0f172a; color: #f1f5f9;">
+    <h2 class="mb-6" style="color: #38bdf8;">Use Case 5: Form Validation</h2>
+    <p class="text-lg mb-4" style="color: #cbd5e1;">Manage form state and validation logic</p>
+    <div style="background-color: #1e293b; padding: 1.5rem;">
+      <pre><code style="color: #38bdf8;">class LoginViewModel : ViewModel() {
+    val email = MutableLiveData&lt;String&gt;()
+    val password = MutableLiveData&lt;String&gt;()
+    
+    val isValid: LiveData&lt;Boolean&gt; = MediatorLiveData&lt;Boolean&gt;().apply {
+        addSource(email) { validate() }
+        addSource(password) { validate() }
+    }
+    
+    private fun validate() {
+        val emailValid = email.value?.contains("@") == true
+        val passValid = (password.value?.length ?: 0) &gt;= 6
+        isValid.value = emailValid &amp;&amp; passValid
+    }
+}</code></pre>
+    </div>
+  </section>
+
+  <!-- Slide 11: Use Case 6 - ViewModelScope -->
+  <section class="slide p-16 col" style="background-color: #0f172a; color: #f1f5f9;">
+    <h2 class="mb-6" style="color: #38bdf8;">Use Case 6: Coroutines with ViewModelScope</h2>
+    <p class="text-lg mb-4" style="color: #cbd5e1;">Automatic cancellation when ViewModel is cleared</p>
+    <div style="background-color: #1e293b; padding: 1.5rem;">
+      <pre><code style="color: #38bdf8;">class SearchViewModel : ViewModel() {
+    private val _results = MutableStateFlow&lt;List&lt;Item&gt;&gt;(emptyList())
+    val results: StateFlow&lt;List&lt;Item&gt;&gt; = _results
+    
+    fun search(query: String) = viewModelScope.launch {
+        delay(300) // Debounce
+        _results.value = repository.search(query)
+    }
+    
+    // Automatically cancelled when ViewModel is cleared
+}</code></pre>
+    </div>
+  </section>
+
+  <!-- Slide 12: Use Case 7 - SavedStateHandle -->
+  <section class="slide p-16 col" style="background-color: #0f172a; color: #f1f5f9;">
+    <h2 class="mb-6" style="color: #38bdf8;">Use Case 7: Process Death Survival</h2>
+    <p class="text-lg mb-4" style="color: #cbd5e1;">SavedStateHandle persists data during process death</p>
+    <div style="background-color: #1e293b; padding: 1.5rem;">
+      <pre><code style="color: #38bdf8;">class DetailViewModel(
+    private val savedStateHandle: SavedStateHandle
+) : ViewModel() {
+    
+    var selectedId: String?
+        get() = savedStateHandle["selected_id"]
+        set(value) { savedStateHandle["selected_id"] = value }
+    
+    fun loadDetails(id: String) {
+        selectedId = id // Survives process death
+        // Load data...
+    }
+}</code></pre>
+    </div>
+  </section>
+
+  <!-- Slide 13: ViewModel Factory -->
+  <section class="slide p-16 col" style="background-color: #0f172a; color: #f1f5f9;">
+    <h2 class="mb-6" style="color: #38bdf8;">ViewModel Factory (Constructor Injection)</h2>
+    <div style="background-color: #1e293b; padding: 1.5rem;">
+      <pre><code style="color: #38bdf8;">class UserViewModelFactory(
+    private val repository: UserRepository
+) : ViewModelProvider.Factory {
+    override fun &lt;T : ViewModel&gt; create(modelClass: Class&lt;T&gt;): T {
+        if (modelClass.isAssignableFrom(UserViewModel::class.java)) {
+            return UserViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel")
+    }
+}
+
+// Usage
+val viewModel: UserViewModel by viewModels { 
+    UserViewModelFactory(repository) 
+}</code></pre>
+    </div>
+  </section>
+
+  <!-- Slide 14: Architecture Diagram -->
+  <section class="slide p-16 col" style="background-color: #0f172a; color: #f1f5f9;">
+    <h2 class="mb-6" style="color: #38bdf8;">MVVM Architecture with ViewModel</h2>
+    <div class="row gap-lg" style="align-items: stretch;">
+      <div class="fill-width" style="background-color: #1e293b; padding: 2rem;">
+        <h3 class="mb-4" style="color: #38bdf8;">View (Activity/Fragment)</h3>
+        <p style="color: #cbd5e1;">Observes data, displays UI</p>
+      </div>
+      <div style="color: #38bdf8; font-size: 2rem; align-self: center;">↔</div>
+      <div class="fill-width" style="background-color: #1e293b; padding: 2rem;">
+        <h3 class="mb-4" style="color: #38bdf8;">ViewModel</h3>
+        <p style="color: #cbd5e1;">Manages UI state, business logic</p>
+      </div>
+      <div style="color: #38bdf8; font-size: 2rem; align-self: center;">↔</div>
+      <div class="fill-width" style="background-color: #1e293b; padding: 2rem;">
+        <h3 class="mb-4" style="color: #38bdf8;">Repository</h3>
+        <p style="color: #cbd5e1;">Data source abstraction</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 15: LiveData vs StateFlow -->
+  <section class="slide p-16 col" style="background-color: #0f172a; color: #f1f5f9;">
+    <h2 class="mb-6" style="color: #38bdf8;">LiveData vs StateFlow</h2>
+    <div class="row gap-lg">
+      <div class="fill-width" style="background-color: #1e293b; padding: 2rem;">
+        <h3 class="mb-4" style="color: #38bdf8;">LiveData</h3>
+        <ul style="color: #cbd5e1; font-size: 0.95rem;">
+          <li>Lifecycle-aware by default</li>
+          <li>Android-specific</li>
+          <li>No initial value required</li>
+        </ul>
+      </div>
+      <div class="fill-width" style="background-color: #1e293b; padding: 2rem;">
+        <h3 class="mb-4" style="color: #38bdf8;">StateFlow</h3>
+        <ul style="color: #cbd5e1; font-size: 0.95rem;">
+          <li>Kotlin Coroutines-based</li>
+          <li>Platform-independent</li>
+          <li>Requires initial value</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 16: Best Practices Part 1 -->
+  <section class="slide p-16 col" style="background-color: #0f172a; color: #f1f5f9;">
+    <h2 class="mb-6" style="color: #38bdf8;">Best Practices (Part 1)</h2>
+    <ul class="text-lg" style="color: #cbd5e1;">
+      <li>Never pass Activity/Fragment context to ViewModel</li>
+      <li>Use ViewModelScope for coroutines</li>
+      <li>Expose immutable data (LiveData/StateFlow)</li>
+      <li>Keep ViewModels independent of Android framework</li>
+    </ul>
+  </section>
+
+  <!-- Slide 17: Best Practices Part 2 -->
+  <section class="slide p-16 col" style="background-color: #0f172a; color: #f1f5f9;">
+    <h2 class="mb-6" style="color: #38bdf8;">Best Practices (Part 2)</h2>
+    <ul class="text-lg" style="color: #cbd5e1;">
+      <li>Inject dependencies via constructor or Factory</li>
+      <li>Use Repository pattern for data layer separation</li>
+      <li>Handle resource cleanup in onCleared()</li>
+      <li>Test ViewModel logic with unit tests</li>
+    </ul>
+  </section>
+
+  <!-- Slide 18: Common Pitfalls -->
+  <section class="slide p-16 col" style="background-color: #0f172a; color: #f1f5f9;">
+    <h2 class="mb-6" style="color: #38bdf8;">Common Pitfalls to Avoid</h2>
+    <ul class="text-lg" style="color: #cbd5e1;">
+      <li>Storing Activity/Fragment references (causes leaks)</li>
+      <li>Heavy operations in ViewModel constructor</li>
+      <li>Exposing mutable LiveData/StateFlow publicly</li>
+      <li>Business logic in Activity/Fragment instead of ViewModel</li>
+    </ul>
+  </section>
+
+  <!-- Slide 19: ViewModel Scope Comparison -->
+  <section class="slide p-16 col" style="background-color: #0f172a; color: #f1f5f9;">
+    <h2 class="mb-6" style="color: #38bdf8;">ViewModel Scope Comparison</h2>
+    <div class="row gap-lg">
+      <div class="fill-width" style="background-color: #1e293b; padding: 2rem;">
+        <h3 class="mb-4" style="color: #38bdf8;">viewModels()</h3>
+        <p style="color: #cbd5e1;">Scoped to Fragment or Activity</p>
+      </div>
+      <div class="fill-width" style="background-color: #1e293b; padding: 2rem;">
+        <h3 class="mb-4" style="color: #38bdf8;">activityViewModels()</h3>
+        <p style="color: #cbd5e1;">Shared across all Fragments in Activity</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 20: Real Example - E-commerce Cart -->
+  <section class="slide p-16 col" style="background-color: #0f172a; color: #f1f5f9;">
+    <h2 class="mb-6" style="color: #38bdf8;">Real Example: E-commerce Cart</h2>
+    <div style="background-color: #1e293b; padding: 1.5rem;">
+      <pre><code style="color: #38bdf8;">class CartViewModel : ViewModel() {
+    private val _items = MutableStateFlow&lt;List&lt;CartItem&gt;&gt;(emptyList())
+    val items: StateFlow&lt;List&lt;CartItem&gt;&gt; = _items
+    
+    val totalPrice: StateFlow&lt;Double&gt; = items.map { items -&gt;
+        items.sumOf { it.price * it.quantity }
+    }.stateIn(viewModelScope, SharingStarted.Lazily, 0.0)
+    
+    fun addItem(item: CartItem) {
+        _items.value = _items.value + item
+    }
+    
+    fun removeItem(itemId: String) {
+        _items.value = _items.value.filter { it.id != itemId }
+    }
+}</code></pre>
+    </div>
+  </section>
+
+  <!-- Slide 21: Testing ViewModels -->
+  <section class="slide p-16 col" style="background-color: #0f172a; color: #f1f5f9;">
+    <h2 class="mb-6" style="color: #38bdf8;">Testing ViewModels</h2>
+    <div style="background-color: #1e293b; padding: 1.5rem;">
+      <pre><code style="color: #38bdf8;">@Test
+fun `increment increases count by one`() = runTest {
+    val viewModel = CounterViewModel()
+    
+    viewModel.increment()
+    
+    assertEquals(1, viewModel.count.value)
+}
+
+@Test
+fun `load users updates state`() = runTest {
+    val mockRepo = MockUserRepository()
+    val viewModel = UserViewModel(mockRepo)
+    
+    viewModel.loadUsers()
+    
+    assertTrue(viewModel.users.value.isNotEmpty())
+}</code></pre>
+    </div>
+  </section>
+
+  <!-- Slide 22: Java vs Kotlin Comparison -->
+  <section class="slide p-16 col" style="background-color: #0f172a; color: #f1f5f9;">
+    <h2 class="mb-6" style="color: #38bdf8;">Java vs Kotlin: Key Differences</h2>
+    <div class="row gap-lg">
+      <div class="fill-width" style="background-color: #1e293b; padding: 2rem;">
+        <h3 class="mb-4" style="color: #38bdf8;">Kotlin</h3>
+        <p style="color: #cbd5e1; font-size: 0.95rem;">by viewModels() delegation, Coroutines, StateFlow</p>
+      </div>
+      <div class="fill-width" style="background-color: #1e293b; padding: 2rem;">
+        <h3 class="mb-4" style="color: #38bdf8;">Java</h3>
+        <p style="color: #cbd5e1; font-size: 0.95rem;">ViewModelProvider.get(), RxJava, LiveData primary</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Slide 23: Summary -->
+  <section class="slide p-16 col" style="background-color: #0f172a; color: #f1f5f9;">
+    <h2 class="mb-6" style="color: #38bdf8;">Summary</h2>
+    <ul class="text-lg" style="color: #cbd5e1;">
+      <li>ViewModel survives configuration changes</li>
+      <li>Perfect for data persistence and network operations</li>
+      <li>Share data between fragments using activityViewModels()</li>
+      <li>Use ViewModelScope for automatic coroutine management</li>
+    </ul>
+  </section>
+
+  <!-- Slide 24: Thank You -->
+  <section class="slide p-16 col center" style="background-color: #020617; color: #f1f5f9;">
+    <h2 class="text-5xl mb-6" style="color: #38bdf8;">Thank You!</h2>
+    <p class="text-xl" style="color: #cbd5e1;">Questions?</p>
+    <p class="text-sm mt-8" style="color: #94a3b8;">Keep building great Android apps! 🚀</p>
+  </section>
+
+</body>
+</html>
+
